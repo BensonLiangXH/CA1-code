@@ -44,7 +44,7 @@ def test_mark_outside_range_raises_value_error(mark_one, mark_two):
     (50, "50"),    # mark_two is a string
     (50, 50.0),    # mark_two is a float
     (50, None),    # mark_two is missing
-    (50, False),   # mark_two is a bool, not a valid int
+    (50, False),   # mark_two is a bool, not a valid int    
 ])
 def test_mark_with_invalid_type_raises_type_error(mark_one, mark_two):
     with pytest.raises(TypeError):
