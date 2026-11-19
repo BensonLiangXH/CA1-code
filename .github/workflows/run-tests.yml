@@ -1,76 +1,46 @@
-name: Run Unit Tests
+name: Run Unit Tests                           # Workflow name shown in the Actions tab
 
-on:
-  push:
-    # ==================================================================
-    # ENHANCEMENT 1 (Branch filter)
-    # Only pushes to the main branch trigger tests.
-    # Pushes to other branches (unfinished work) are skipped.
-    # ==================================================================
-    branches: [main]
+on:                                            # TRIGGERS: when the workflow runs
+  push:                                        # Run when code is pushed...
+    branches: [main]                           # ENHANCEMENT 1: ...but only pushes to main (other branches skipped)
+    paths:                                     # ENHANCEMENT 2: ...and only if one of these files changed
+      - "src/**"                               #   source code
+      - "tests/**"                             #   test files
+      - "requirements.txt"                     #   installed packages
+      - ".github/workflows/run-tests.yml"      #   this workflow file
+                                               #   (anything else, e.g. notes.txt, does NOT trigger a run)
 
-    # ==================================================================
-    # ENHANCEMENT 2 (Paths filter)
-    # Only run when a file that can affect the test results changes.
-    # Changes to docs or notes (e.g. notes.txt) are skipped.
-    # ==================================================================
-    paths:
+  pull_request:                                # ENHANCEMENT 1: also run when a pull request is opened/updated...
+    branches: [main]                           # ENHANCEMENT 1: ...but only pull requests into main (tested before merging)
+    paths:                                     # ENHANCEMENT 2: same paths filter for pull requests
       - "src/**"
       - "tests/**"
       - "requirements.txt"
       - ".github/workflows/run-tests.yml"
 
-  # ====================================================================
-  # ENHANCEMENT 1 (Pull request trigger)
-  # Also run tests when a pull request into main is opened or updated,
-  # so code is tested at the review stage, before it is merged.
-  # The same paths filter (Enhancement 2) applies here.
-  # ====================================================================
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "requirements.txt"
-      - ".github/workflows/run-tests.yml"
+  workflow_dispatch:                           # EXTRA: adds a manual "Run workflow" button (not an enhancement)
 
-  # ====================================================================
-  # EXTRA (Manual trigger, not an enhancement)
-  # Adds a "Run workflow" button in the Actions tab.
-  # ====================================================================
-  workflow_dispatch:
+concurrency:                                   # ENHANCEMENT 3: control runs that overlap
+  group: ${{ github.workflow }}-${{ github.ref }}  # Runs of this workflow on the same branch share one group
+  cancel-in-progress: true                     # A newer run cancels the older one still in progress
 
-# ======================================================================
-# ENHANCEMENT 3 (Concurrency)
-# Runs on the same branch share one group. If a new run starts while
-# an older one is still in progress, the older run is cancelled,
-# so only the newest commit is tested.
-# ======================================================================
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+jobs:                                          # JOB: unchanged from the basic workflow
+  test:                                        # Job name
+    runs-on: ubuntu-latest                     # Fresh Linux machine (runner) every time
 
-# ======================================================================
-# JOB (unchanged from the basic workflow)
-# Fresh runner: checkout code, set up Python, install packages, run pytest
-# ======================================================================
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
+    steps:                                     # Steps run from top to bottom
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4              # 1. Download the repo code onto the runner
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5          # 2. Install Python
         with:
-          python-version: "3.12"
+          python-version: "3.12"               #    Python version to use
 
-      - name: Install dependencies
+      - name: Install dependencies             # 3. Install pytest and pytest-cov
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run pytest with coverage
+      - name: Run pytest with coverage         # 4. Run all tests and show coverage
         run: python -m pytest -v --cov=src --cov-report=term-missing
