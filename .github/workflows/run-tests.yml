@@ -1,6 +1,34 @@
 name: Run Unit Tests
 
-on: push
+on:
+  # ENHANCEMENT 1: only run on pushes to main, not to every feature/AI-experiment branch.
+  push:
+    branches: [main]
+    # ENHANCEMENT 2: only run when files that can change test results are changed.
+    # Editing docs, the AI declaration, README etc. will NOT trigger a run.
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "requirements.txt"
+      - ".github/workflows/run-tests.yml"
+
+  # Test work on other branches at the review stage, before it is merged into main.
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "requirements.txt"
+      - ".github/workflows/run-tests.yml"
+
+  # Allows a manual run from the Actions tab (useful for the demo).
+  workflow_dispatch:
+
+# ENHANCEMENT 3: if several pushes arrive close together on the same branch,
+# cancel the older run that is still in progress and only test the newest commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -13,7 +41,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
