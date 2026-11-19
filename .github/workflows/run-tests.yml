@@ -1,18 +1,31 @@
 name: Run Unit Tests
 
 on:
-  # ENHANCEMENT 1: only run on pushes to main, not to every feature/AI-experiment branch.
   push:
+    # ==================================================================
+    # ENHANCEMENT 1 (Branch filter)
+    # Only pushes to the main branch trigger tests.
+    # Pushes to other branches (unfinished work) are skipped.
+    # ==================================================================
     branches: [main]
-    # ENHANCEMENT 2: only run when files that can change test results are changed.
-    # Editing docs, the AI declaration, README etc. will NOT trigger a run.
+
+    # ==================================================================
+    # ENHANCEMENT 2 (Paths filter)
+    # Only run when a file that can affect the test results changes.
+    # Changes to docs or notes (e.g. notes.txt) are skipped.
+    # ==================================================================
     paths:
       - "src/**"
       - "tests/**"
       - "requirements.txt"
       - ".github/workflows/run-tests.yml"
 
-  # Test work on other branches at the review stage, before it is merged into main.
+  # ====================================================================
+  # ENHANCEMENT 1 (Pull request trigger)
+  # Also run tests when a pull request into main is opened or updated,
+  # so code is tested at the review stage, before it is merged.
+  # The same paths filter (Enhancement 2) applies here.
+  # ====================================================================
   pull_request:
     branches: [main]
     paths:
@@ -21,15 +34,26 @@ on:
       - "requirements.txt"
       - ".github/workflows/run-tests.yml"
 
-  # Allows a manual run from the Actions tab (useful for the demo).
+  # ====================================================================
+  # EXTRA (Manual trigger, not an enhancement)
+  # Adds a "Run workflow" button in the Actions tab.
+  # ====================================================================
   workflow_dispatch:
 
-# ENHANCEMENT 3: if several pushes arrive close together on the same branch,
-# cancel the older run that is still in progress and only test the newest commit.
+# ======================================================================
+# ENHANCEMENT 3 (Concurrency)
+# Runs on the same branch share one group. If a new run starts while
+# an older one is still in progress, the older run is cancelled,
+# so only the newest commit is tested.
+# ======================================================================
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# ======================================================================
+# JOB (unchanged from the basic workflow)
+# Fresh runner: checkout code, set up Python, install packages, run pytest
+# ======================================================================
 jobs:
   test:
     runs-on: ubuntu-latest
