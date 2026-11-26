@@ -1,5 +1,6 @@
 import pytest
 
+
 from src.grade_average import calculate_average
 
 
