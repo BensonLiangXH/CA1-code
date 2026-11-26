@@ -35,7 +35,7 @@ jobs:                                          # JOB: unchanged from the basic w
       - name: Set up Python
         uses: actions/setup-python@v5          # 2. Install Python
         with:
-          python-version: "3.14"               #    Python version to use
+          python-version: "3.12"               #    Python version to use
 
       - name: Install dependencies             # 3. Install pytest and pytest-cov
         run: |
